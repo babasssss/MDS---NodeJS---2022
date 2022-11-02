@@ -3,24 +3,83 @@ const User = require('../../data/models/User')
 const router = require('express').Router()
 
 
-router.route('/users/:id')
-.delete(async(req,res)=>{
 
-   
-    //const users = await User.deleteOne({"_id":user_id})
+
+
+router.route('/:id')
+//Select USERS via ID
+.get(async(req,res)=>{
+    const params=req.params
     
+
+    if(!params.id){
+        return res.status(400).send('Missing ID')
+    }
+
+    try {
+        //On recuper les infos de users dans la BDD
+        const user = await User.findById(params.id).select('-password')
+        const userObjet = user.toObject()
+    
+        return res.send(userObjet)
+        
+    } catch (error) {
+        console.error(error)
+        return res.status(500).send(error)
+    }
+
+})
+
+//Delect User
+.delete(async(req,res)=>{
+    const params=req.params
+    // On verif la présence de l'id dans l'url/requete
+    if(!params.id){
+        return res.status(400).send('Missing ID')
+    }
+    try {
+        //On supprime l'user grace a la méthode findByIdAndDelete
+        await User.findByIdAndDelete(params.id)
+        return res.send(`User with ID ${params.id} as been deleted`)
+        
+    } catch (error) {
+        //Renvoi error serveur
+        console.error(error)
+        return res.status(500).send(error)
+    }
+
+})
+
+//Update User
+.patch(async(req,res)=>{
+    const params=req.params
+    const user = req.body
+    // On verif la présence de l'id dans l'url/requete
+    if(!params.id){
+        return res.status(400).send('Missing ID')
+    }
+    // On verif la présence d'un body dans l'url/requete
+    if(!user){
+        return res.status(400).send('Missing user')
+    }
+
+
+    try {
+        //On met a jour l'user grace a la méthode findByIdAndUpdate
+        const userUpdated = await User.findByIdAndUpdate(params.id, user, {new: true}).select('-password')
+        const userObjet = userUpdated.toObject()
+        return res.send(userObjet)
+        
+    } catch (error) {
+        console.error(error)
+        res.status(500).send(error)
+    }
 
 })
 
 
 
-
-
-
-
-
-
-
+//Route standard
 router.route('/')
 .get(async(req,res)=>{
     const users = await User.find().select('-password')
